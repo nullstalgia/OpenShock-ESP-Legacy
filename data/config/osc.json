@@ -1,0 +1,8 @@
+{
+    "host": "",
+    "port": 9000,
+    "path": "/avatar/parameters/OpenShock/Input/",
+    "enabled": false,
+    "sendHighest": true,
+    "sendRelative": true
+}

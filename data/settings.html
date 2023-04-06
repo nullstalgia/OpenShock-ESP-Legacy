@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OpenShock Settings</title>
+    <script>
+        fetch('/res/header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.querySelector('head').innerHTML += data;
+            });
+    </script>
+    <script src="/res/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Get osc config from /osc/get
+            $.get("/osc/get", function (data) {
+                console.log(data);
+                $("#osc-port").val(data.port);
+                $("#osc-host").val(data.host);
+                $("#osc-path").val(data.path);
+                $("#osc-enabled").prop("checked", data.enabled);
+                $("#osc-send-highest").prop("checked", data.sendHighest);
+                $("#osc-send-relative").prop("checked", data.sendRelative);
+
+                // Remove readonly attributes now that we have values
+                $("#osc-port").removeAttr("readonly");
+                $("#osc-host").removeAttr("readonly");
+                $("#osc-path").removeAttr("readonly");
+                $("#osc-enabled").removeAttr("readonly");
+                $("#osc-send-highest").removeAttr("readonly");
+                $("#osc-send-relative").removeAttr("readonly");
+            });
+
+            // Save osc config when save button is clicked
+            $("#osc-save").click(function () {
+                var port = $("#osc-port").val();
+                var host = $("#osc-host").val();
+                var path = $("#osc-path").val();
+                var enabled = $("#osc-enabled").prop("checked");
+                var sendHighest = $("#osc-send-highest").prop("checked");
+                var sendRelative = $("#osc-send-relative").prop("checked");
+
+                $.post("/osc/set", {
+                    port: port,
+                    host: host,
+                    path: path,
+                    enabled: enabled,
+                    sendHighest: sendHighest,
+                    sendRelative: sendRelative
+                }, function (data) {
+                    alert("OSC config saved! Restart ESP for changes to take effect.");
+                }).fail(function () {
+                    alert("Error saving OSC config: request failed");
+                })
+            });
+
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            // Get bpio config from /bpio/get
+            $.get("/bpio/get", function (data) {
+                console.log(data);
+                $("#bpio-port").val(data.port);
+                $("#bpio-host").val(data.host);
+                // Set enabled checkbox
+                if (data.enabled) {
+                    $("#bpio-enabled").prop("checked", true);
+                } else {
+                    $("#bpio-enabled").prop("checked", false);
+                }
+
+                // Remove readonly attributes now that we have values
+                $("#bpio-port").removeAttr("readonly");
+                $("#bpio-host").removeAttr("readonly");
+                $("#bpio-enabled").removeAttr("readonly");
+            });
+
+            // Save osc config when save button is clicked
+            $("#bpio-save").click(function () {
+                var port = $("#bpio-port").val();
+                var host = $("#bpio-host").val();
+                var enabled = $("#bpio-enabled").prop("checked");
+
+                $.post("/bpio/set", {
+                    port: port,
+                    host: host,
+                    enabled: enabled
+                }, function (data) {
+                    alert("BP.IO config saved! Restart ESP for changes to take effect.");
+                }).fail(function () {
+                    alert("Error saving BP.IO config: request failed");
+                })
+            });
+
+        });
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">OpenShock</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item ">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shockers/config">Devices</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><s>Sharing</s><sup>coming soon</sup></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h2>OSC Config</h2>
+            <form id="osc-config" class="form-horizontal">
+              <div class="form-group">
+                <label class="control-label col-md-4" for="osc-port">OSC Port:</label>
+                <div class="col-md-8">
+                  <input type="number" id="osc-port" class="form-control" min="0" max="65535" value="9000" readonly>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-4" for="osc-host">OSC Host:</label>
+                <div class="col-md-8">
+                  <input type="text" id="osc-host" class="form-control" value="" readonly>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-4" for="osc-path">OSC Path:</label>
+                <div class="col-md-8">
+                  <input type="text" id="osc-path" class="form-control" value="" readonly>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="osc-enabled" readonly> Enabled
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="osc-send-highest" readonly> Send highest intensity to /High/Intensity
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="osc-send-relative" readonly> Send relative intensity instead of absolute
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <button id="osc-save" class="btn btn-primary">Save</button>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="col-md-6">
+            <h2>BPIO Config</h2>
+            <form id="bpio-config" class="form-horizontal">
+              <div class="form-group">
+                <label class="control-label col-md-4" for="bpio-port">BP.IO Port:</label>
+                <div class="col-md-8">
+                  <input type="number" id="bpio-port" class="form-control" min="0" max="65535" value="9000" readonly>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-4" for="bpio-host">BP.IO Host:</label>
+                <div class="col-md-8">
+                  <input type="text" id="bpio-host" class="form-control" value="" readonly>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="bpio-enabled" readonly> BP.IO Enabled
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-4 col-md-8">
+                  <button id="bpio-save" class="btn btn-primary">Save</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+    </div>
+
+      
+    <!-- <h2>OSC Config</h2>
+    <div id="osc-config">
+        <div>
+            <label for="osc-port">OSC Port:</label>
+            <input type="number" id="osc-port" min="0" max="65535" value="9000" readonly>
+        </div>
+        <div>
+            <label for="osc-host">OSC Host:</label>
+            <input type="text" id="osc-host" value="" readonly>
+        </div>
+        <div>
+            <label for="osc-path">OSC Path:</label>
+            <input type="text" id="osc-path" value="" readonly>
+        </div>
+        <div>
+            <label for="osc-enabled">Enabled:</label>
+            <input type="checkbox" id="osc-enabled" readonly>
+        </div>
+        <div>
+            <label for="osc-send-highest">Send highest intensity to /High/Intensity</label>
+            <input type="checkbox" id="osc-send-highest" readonly>
+        </div>
+        <div>
+            <button id="osc-save">Save</button>
+        </div>
+    </div>
+
+    <hr>
+    <h2>BPIO Config</h2>
+    <div id="bpio-config">
+        <div>
+            <label for="bpio-port">BP.IO Port:</label>
+            <input type="number" id="bpio-port" min="0" max="65535" value="9000" readonly>
+        </div>
+        <div>
+            <label for="bpio-host">BP.IO Host:</label>
+            <input type="text" id="bpio-host" value="" readonly>
+        </div>
+        <div>
+            <label for="bpio-enabled">BP.IO Enabled:</label>
+            <input type="checkbox" id="bpio-enabled" value="" readonly>
+        </div>
+        <div>
+            <button id="bpio-save">Save</button>
+        </div>
+    </div> -->
+    <script src="/res/popper.min.js"></script>
+    <script src="/res/bootstrap.min.js"></script>
+</body>
+</html>

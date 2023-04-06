@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Add New Shocker</title>
+    <script>
+        fetch('/res/header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.querySelector('head').innerHTML += data;
+            });
+    </script>
+    <script src="/res/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Get list of current shocker IDs from endpoint
+            $.get("shockers", function (data) {
+                // Parse JSON response
+                // Example input:
+                // {"shockers":[{"id":4052,"shock_multiplier":0.349999994,"vibe_multiplier":1,"name":"Army","type":0},{"id":4287,"shock_multiplier":1,"vibe_multiplier":1,"name":"Leggy","type":0},{"id":4289,"shock_multiplier":1,"vibe_multiplier":1
+                var shockers = data.shockers;
+
+                // For each shocker, create an element that describes the shocker's parameters
+
+                function updateShocker(id, type, shock_multiplier, vibe_multiplier, name, role) {
+                    $.post("/shockers/update", { name: name, type: type, id: id, shock_multiplier: shock_multiplier, vibe_multiplier: vibe_multiplier, role: role }, function (data) {
+                        // If the shocker was successfully added to the database, add an element to the page that describes the shocker's parameters
+                        // Check if the response is 200 OK
+
+                        alert("Shocker updated successfully.");
+
+                    }).fail(function () {
+                        alert("Failed to update shocker.");
+                    });
+                }
+
+                shockers.forEach(function (shocker) {
+                    var shockerContainer = $("<div class='shocker-container row'>");
+                    var deviceConfigCol = $("<div class='col-md-6'>");
+                    var optionCol = $("<div class='col-md-6'>");
+                    var idInput = $("<input type='text' class='form-control' id=idInput" + shocker.id + " name='id' value='" + shocker.id + "' readonly>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val());
+                        });
+                    // Create a dropdown menu for the shocker type and set the default value to the current type
+                    // Options: 
+                    // 0: Generic Shocker
+                    // 1: Petrainer
+
+                    var typeInput = $("<select class='form-control' id=typeInput" + shocker.id + " name='type'>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val());
+                        });
+                    var typeOptions = ["Generic Shocker", "Petrainer"];
+                    typeOptions.forEach(function (option) {
+                        var optionElement = $("<option value='" + typeOptions.indexOf(option) + "'>" + option + "</option>");
+                        if (typeOptions.indexOf(option) == shocker.type) {
+                            optionElement.attr("selected", "selected");
+                        }
+                        typeInput.append(optionElement);
+                    });
+                    var shockMultiplierInput = $("<input type='range' min='0' max='1' step='0.01' class='form-control' id=shockMultiplierInput" + shocker.id + " name='shock_multiplier' value='" + shocker.shock_multiplier + "'>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val());
+                        });
+                    var vibeMultiplierInput = $("<input type='range' min='0' max='1' step='0.01' class='form-control' id=vibeMultiplierInput" + shocker.id + " name='vibe_multiplier' value='" + shocker.vibe_multiplier + "'>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val());
+                        });
+                    var nameInput = $("<input type='text' class='form-control' id=nameInput" + shocker.id + " name='name' value='" + shocker.name + "'>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val());
+                        });
+
+                    // Add a delete button
+                    var deleteButton = $("<button class='btn btn-danger delete-button'>Delete</button>")
+                        .on("click", function () {
+                            // Send a request to the endpoint to delete the shocker
+                            $.post("/shockers/delete", { id: shocker.id }, function (data) {
+                                // If the shocker was successfully deleted from the database, remove the element from the page
+                                location.reload();
+                            });
+                        });
+                    // Add the delete button to the container
+                    optionCol.append(deleteButton);
+
+                    // Add a green Test/Pair button
+                    // Send a GET request to /vibrate
+                    // Params:
+                    // id, intensity, (10), duration (2000), timestamp (unix timestamp)
+                    var testButton = $("<button class='btn btn-success test-button'>Test/Pair</button>")
+                        .on("click", function () {
+                            $.get("/vibrate", { id: shocker.id, intensity: 10, duration: 2000, timestamp: Date.now() }, function (data) {
+                            });
+                        });
+                    
+                    var pairingHelpButton = $("<button class='btn btn-info pairing-help-button'>Pairing Help</button>")
+                        .on("click", function () {
+                            alert("Hold down the power button on your shock device till a pairing beep is heard. Then press the test/pair button. A confirmation beep/vibe from the device will show success.");
+                        });
+
+                    // Add the test button to the container
+                    optionCol.append(testButton);
+
+                    // Add the pairing help button to the container
+                    optionCol.append(pairingHelpButton);
+
+                    var roleInput = $("<select class='form-control' id=roleInput" + shocker.id + " name='role'>")
+                        .on("change", function () {
+                            updateShocker(idInput.val(), typeInput.val(), shockMultiplierInput.val(), vibeMultiplierInput.val(), nameInput.val(), roleInput.val());
+                        });
+
+                    var roleOptions = [
+                        ["None", ""],
+                        ["Right Upper Leg", "RUL"],
+                        ["Right Lower Leg", "RLL"],
+                        ["Left Upper Leg", "LUL"],
+                        ["Left Lower Leg", "LLL"],
+                        ["Right Upper Arm", "RUA"],
+                        ["Right Lower Arm", "RLA"],
+                        ["Left Upper Arm", "LUA"],
+                        ["Left Lower Arm", "LLA"],
+                        ["Custom 1", "C1"],
+                        ["Custom 2", "C2"],
+                        ["Custom 3", "C3"],
+                        ["Custom 4", "C4"],
+                        ["Custom 5", "C5"]
+                    ];
+                    roleOptions.forEach(function (option) {
+                        var displayName = option[1] ? option[0] + " (" + option[1] + ")" : option[0];
+                        var optionElement = $("<option value='" + option[1] + "'>" + displayName + "</option>");
+                        if (shocker.role == option[1]) {
+                            optionElement.attr("selected", "selected");
+                        }
+                        roleInput.append(optionElement);
+                    });
+                    
+                    // Place items in the container
+                    deviceConfigCol.append("<label for='idInput" + shocker.id + "'>ID: </label>").append(idInput);
+                    deviceConfigCol.append("<label for='typeInput" + shocker.id + "'>Type: </label>").append(typeInput);
+                    // Label for the shock multiplier input
+                    deviceConfigCol.append("<label for='shockMultiplierInput" + shocker.id + "'>Maximum Shock/Scaling: </label>").append(shockMultiplierInput);
+                    deviceConfigCol.append("<label for='vibeMultiplierInput" + shocker.id + "'>Maximum Vibe/Scaling: </label>").append(vibeMultiplierInput);
+                    deviceConfigCol.append("<label for='nameInput" + shocker.id + "'>Shocker Name: </label>").append(nameInput);
+                    deviceConfigCol.append("<label for='roleInput" + shocker.id + "'>Shocker Role: </label>").append(roleInput);
+
+                    // Add container to the page
+                    shockerContainer.append(deviceConfigCol).append(optionCol);
+                    $("#shocker_list").append(shockerContainer);
+                });
+
+                // For each shocker add a form to a table of shockers on the page that allows the user to edit the shocker's parameters
+
+            });
+
+            // Handle form submission
+            $("#new_shocker_form").submit(function (event) {
+                event.preventDefault();
+
+                // Serialize form data
+                var formData = $(this).serialize();
+
+                // Send form data to endpoint
+                $.post("/shockers/new", { name: $("#shocker_name").val(), type: $("#shocker_type").val(), id: $("#shocker_id").val(), shock_multiplier: $("#shock_multiplier").val(), vibe_multiplier: $("#vibe_multiplier").val(), role: $("#shocker_role").val() }, function (data) {
+                    // If the shocker was successfully added to the database, add an element to the page that describes the shocker's parameters
+                    // var element = $("<p>Shocker ID: " + $("#shocker_id").val() + "<br>" +
+                    //     "Shocker Type: " + $("#shocker_type").val() + "<br>" +
+                    //     "Maximum Shock Scaling: " + $("#shock_multiplier").val() + "<br>" +
+                    //     "Shocker Name: " + $("#shocker_name").val() + "</p>");
+                    // $("#shocker_list").append(element);
+
+                    // // Reset form fields
+                    // $("#shocker_id").val("");
+                    // $("#shocker_type").val("");
+                    // $("#shock_multiplier").val("");
+                    // $("#vibe_multiplier").val("");
+                    // $("#shocker_name").val("");
+
+                    // Reload the page instead of adding the element to the page
+                    location.reload();
+                }).fail(function (data) {
+                    // If the shocker was not successfully added to the database, display an error message
+                    $("#error_message").text("Error: " + data.responseText);
+                })
+            });
+        });
+    </script>
+    <style>
+        body {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: #333;
+        }
+
+        .shocker-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add media query to stack the device configurations on top of each other on smaller screens */
+        @media (max-width: 767.98px) {
+            .device-config {
+                display: block !important;
+                margin: 0 !important;
+                padding: 20px 0 !important;
+            }
+
+            .device-config:last-child {
+                margin-bottom: 20px !important;
+            }
+
+            .option-col {
+                margin-top: 20px !important;
+            }
+        }
+
+        .page-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #generate-random-shocker-id {
+            display: inline-block;
+            cursor: pointer;
+          }
+          
+          #generate-random-shocker-id:hover {
+            background-color: #ccc;
+            border-color: #777;
+          }
+    </style>
+    <script>
+        $(document).ready(function() {
+            $("#generate-random-shocker-id").click(function() {
+              var randomInt = Math.floor(Math.random() * 9999) + 1;
+              $("#shocker_id").val(randomInt);
+            });
+        });
+
+          
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">OpenShock</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item ">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/shockers/config">Devices</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><s>Sharing</s><sup>coming soon</sup></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="text-center">Add New Shocker</h1>
+                <form method="POST" id="new_shocker_form">
+                    <div class="form-row">
+                        <div class="form-group col-md-2">
+                            <label for="shocker_id">Shocker ID:</label>
+                            <div class="input-group">
+                              <input type="number" id="shocker_id" name="shocker_id" max="65535" min="1" class="form-control">
+                              <div class="input-group-append">
+                                <span class="input-group-text" id="generate-random-shocker-id">&#x1F3B2;</span>
+                              </div>
+                            </div>
+                          </div>
+                        <div class="form-group col-md-2">
+                            <label for="shocker_type">Shocker Type:</label>
+                            <select id="shocker_type" name="shocker_type" class="form-control">
+                                <option value="0">Generic Shocker</option>
+                                <option value="1">Petrainer</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="shock_multiplier">Maximum Shock Scaling:</label>
+                            <input type="range" id="shock_multiplier" name="shock_multiplier" min="0" step="0.01"
+                                max="1" class="form-control-range">
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="vibe_multiplier">Maximum Vibe Scaling:</label>
+                            <input type="range" id="vibe_multiplier" name="vibe_multiplier" min="0" step="0.01" max="1"
+                                class="form-control-range">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="shocker_name">Shocker Name:</label>
+                            <input type="text" id="shocker_name" name="shocker_name" class="form-control"></input>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="shocker_role">Shocker Role:</label>
+                            <select id="shocker_role" name="shocker_role" class="form-control">
+                                <!-- For some reason, RUL is selected by default instead -->
+                                <option value="none" selected disabled hidden>Select a Role</option>
+                                <option value="RUL">Right Upper Leg (RUL)</option>
+                                <option value="RLL">Right Lower Leg (RLL)</option>
+                                <option value="LUL">Left Upper Leg (LUL)</option>
+                                <option value="LLL">Left Lower Leg (LLL)</option>
+                                <option value="RUA">Right Upper Arm (RUA)</option>
+                                <option value="RLA">Right Lower Arm (RLA)</option>
+                                <option value="LUA">Left Upper Arm (LUA)</option>
+                                <option value="LLA">Left Lower Arm (LLA)</option>
+                                <option value="C1">Custom 1 (C1)</option>
+                                <option value="C2">Custom 2 (C2)</option>
+                                <option value="C3">Custom 3 (C3)</option>
+                                <option value="C4">Custom 4 (C4)</option>
+                                <option value="C5">Custom 5 (C5)</option>
+                            </select>
+                        </div>                        
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <input type="submit" value="Submit" class="btn btn-primary">
+                        </div>
+                    </div>
+                </form>
+
+                <h2>Current Shockers</h2>
+                <div id="shocker_list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/res/popper.min.js"></script>
+    <script src="/res/bootstrap.min.js"></script>
+
+</body>
+
+</html>

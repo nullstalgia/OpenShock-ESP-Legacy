@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>OpenShock</title>
+    <script>
+        fetch('./res/header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.querySelector('head').innerHTML += data;
+            });
+    </script>
+    <script src="res/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: #333;
+        }
+
+        .table {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .table th,
+        .table td {
+            border-color: #555;
+        }
+
+        .btn-primary,
+        .btn-success,
+        .btn-danger {
+            filter: brightness(80%);
+        }
+
+        .custom-range::-webkit-slider-thumb {
+            background-color: #fff;
+            border-color: #aaa;
+        }
+
+        .custom-range::-moz-range-thumb {
+            background-color: #fff;
+            border-color: #aaa;
+        }
+
+        #slider-container {
+            width: 20em;
+            height: 20em;
+            border: .2em solid black;
+            position: relative;
+            border-radius: 2em;
+        }
+
+        #slider {
+            width: 4em;
+            height: 4em;
+            background-color: red;
+            position: absolute;
+            cursor: move;
+            left: 8em;
+            /* Set the initial position to the bottom middle */
+            bottom: 0;
+            border-radius: 2em;
+        }
+
+        #percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1em;
+            color: white;
+        }
+        
+
+        #intensity-scaling-slider {
+            position: relative;
+            right: 0;
+            top: .2em;
+            float: left;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">OpenShock</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shockers/config">Devices</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><s>Sharing</s><sup>coming soon</sup></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <h2>My Devices</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Intensity</th>
+                    <th>Vibe/Shock</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="slider-container">
+        <div id="slider">
+            <div id="percentage">0%</div>
+        </div>
+    </div>
+    <!--vertical slider to right of slider container -->
+    <input type="range" id="intensity-scaling-slider" min="0" max="100" value="20" class="slider-vertical"
+        orient="vertical">
+    <span id="scaleFactor">Scale Factor: 20%</span>
+    <script src="/res/jquery-3.6.0.min.js"></script>
+    <script>
+        var slider = $('#slider');
+        var sliderContainer = $('#slider-container');
+        var isDragging = false;
+        var x, y;
+        var percentageDiv = $('#percentage');
+
+        // Connect to the WebSocket server on the same host
+        var socket = new WebSocket('ws://' + window.location.host + ':8080/ws');
+
+        socket.onopen = function () {
+            console.log('WebSocket connection established.');
+        };
+
+        socket.onerror = function (event) {
+            console.log('WebSocket error: ' + event.data);
+        };
+
+        socket.onclose = function () {
+            console.log('WebSocket connection closed.');
+            // Remove the slider when the connection is closed
+            slider.remove();
+        };
+
+        // Handle touch events
+        slider.on('touchstart', function (e) {
+            isDragging = true;
+        });
+
+        sliderContainer.on('touchmove', function (e) {
+            if (isDragging) {
+                var touch = e.originalEvent.touches[0];
+                var x = touch.pageX - sliderContainer.offset().left - slider.width() / 2;
+                var y = touch.pageY - sliderContainer.offset().top - slider.height() / 2;
+                x = Math.max(Math.min(x, sliderContainer.width() - slider.width()), 0);
+                y = Math.max(Math.min(y, sliderContainer.height() - slider.height()), 0);
+                slider.css({ left: x, top: y });
+            }
+        });
+
+
+        slider.mousedown(function () {
+            isDragging = true;
+        });
+
+        $(document).mouseup(function () {
+            isDragging = false;
+            // Snap to the bottom when released
+            slider.animate({ top: sliderContainer.height() - slider.height() });
+            var commands = generateShockerCommands()
+            var ids = commands.map(function (command) {
+                return command.id;
+            });
+            var message = { method: 0, intensity: 0, duration: 0, ids: ids, timestamp: Date.now() };
+            console.log(JSON.stringify(message));
+            socket.send(JSON.stringify(message));
+            percentageDiv.text('0%');
+            sliderContainer.mousemove();
+        });
+
+
+        sliderContainer.mousemove(function (e) {
+            if (isDragging) {
+                tempx = e.pageX - sliderContainer.offset().left - slider.width() / 2;
+                tempy = e.pageY - sliderContainer.offset().top - slider.height() / 2;
+                x = Math.max(Math.min(tempx, sliderContainer.width() - slider.width()), 0);
+                y = Math.max(Math.min(tempy, sliderContainer.height() - slider.height()), 0);
+                slider.css({ left: x, top: y });
+            }
+        });
+
+        function generateShockerCommands() {
+            var commands = [];
+            $('tbody tr').each(function () {
+                var id = parseInt($(this).find('button[id^="enabled-"]').attr('id').replace('enabled-', ''));
+                var enabled = $(this).find('button[id^="enabled-"]').attr('data-enabled') === 'true';
+                var vibeActive = $(this).find('button[id^="vibe-"]').attr('data-active') === 'true';
+                var shockActive = $(this).find('button[id^="shock-"]').attr('data-active') === 'true';
+                var intensity = $(this).find('input[id^="scaling-"]').val() / 100;
+                if (enabled && (vibeActive || shockActive)) {
+                    var method = vibeActive ? 2 : 1;
+                    commands.push({
+                        method: method,
+                        intensity_mult: intensity,
+                        duration: 0,
+                        id: parseInt(id),
+                        timestamp: Date.now()
+                    });
+                }
+            });
+            return commands;
+        }
+
+        var lastIsDragging = false;
+
+        // On document ready, prepare the setInterval
+        $(document).ready(function () {
+            // Set initial scaling slider value to 20%
+            $('#intensity-scaling-slider').val(20);
+
+            // Scale slider position and send via GET every 10ms
+            setInterval(function () {
+                if (isDragging) {
+                    var posY = ((sliderContainer.height() - y - slider.height()) / (sliderContainer.height() - slider.height())) * 100
+                    var method = $('input[name="options"]:checked').attr('id');
+
+                    // var message = { method: method, intensity: posY, duration: 0, id: 4287, timestamp: Date.now() };
+
+                    // Scale intensity with the vertical slider
+                    // message.intensity = message.intensity * ($('#intensity-scaling-slider').val() / 100);
+                    var percentage = Math.round(posY);
+
+                    percentageDiv.text(percentage + '%');
+                    var commands = generateShockerCommands()
+                    commands.forEach(function (command) {
+                        command.intensity = command.intensity_mult * ($('#intensity-scaling-slider').val() / 100) * posY;
+                        socket.send(JSON.stringify(command));
+                    });
+                }
+                lastIsDragging = isDragging;
+            }, 100);
+        });
+
+        // On clicking the scaling button, fade in/out the scaling slider
+        $('#3').click(function () {
+            $('#intensity-scaling-slider').fadeToggle();
+        });
+
+        // On changing the scaling slider, show the new value
+        $('#intensity-scaling-slider').on('input', function () {
+            $('#scaleFactor').text('Scale Factor: ' + $(this).val() + '%');
+        });
+
+        $(document).ready(function () {
+            // Replace `url` with the URL of the GET request
+            var url = '/shockers/get';
+            $.get(url, function (data) {
+                var tbody = $('tbody');
+                // Loop through the shocker data and generate the table rows
+                $.each(data.shockers, function (i, shocker) {
+                    var tr = $('<tr>');
+                    tr.append($('<td>').text(shocker.name));
+                    var enabledBtn = $('<button type="button" class="btn">').attr('id', 'enabled-' + shocker.id).attr('data-enabled', shocker.enabled);
+                    enabledBtn.toggleClass('btn-success', shocker.enabled);
+                    enabledBtn.toggleClass('btn-danger', !shocker.enabled);
+                    enabledBtn.text(shocker.enabled ? 'Enabled' : 'Disabled');
+                    enabledBtn.on('click', function () {
+                        var btn = $(this);
+                        var id = btn.attr('id').replace('enabled-', '');
+                        var enabled = btn.attr('data-enabled') === 'true';
+                        enabled = !enabled;
+                        btn.toggleClass('btn-success', enabled);
+                        btn.toggleClass('btn-danger', !enabled);
+                        btn.attr('data-enabled', enabled.toString());
+                        btn.text(enabled ? 'Enabled' : 'Disabled');
+                        // TODO: Update the shocker device's state on the server
+                    });
+                    tr.append($('<td>').append(enabledBtn));
+                    tr.append($('<td>').html('<input type="range" id="scaling-' + shocker.id + '" class="custom-range" min="0" max="100" step="1" value="10">'));
+                    var vibeBtn = $('<button type="button" class="btn btn-primary">').attr('id', 'vibe-' + shocker.id).attr('data-active', true);
+                    vibeBtn.text('Vibe');
+                    vibeBtn.on('click', function () {
+                        var btn = $(this);
+                        var id = btn.attr('id').replace('vibe-', '');
+                        var active = btn.attr('data-active') === 'true';
+                        if (!active) {
+                            btn.attr('data-active', true);
+                            btn.toggleClass('btn-primary', true);
+                            btn.toggleClass('btn-secondary', false);
+                            var shockBtn = $('#shock-' + id);
+                            shockBtn.attr('data-active', false);
+                            shockBtn.toggleClass('btn-primary', false);
+                            shockBtn.toggleClass('btn-danger', false);
+                            shockBtn.toggleClass('btn-secondary', true);
+                            // TODO: Send vibe command to the server
+                        }
+                    });
+                    var shockBtn = $('<button type="button" class="btn btn-secondary">').attr('id', 'shock-' + shocker.id).attr('data-active', false);
+                    shockBtn.text('Shock');
+                    shockBtn.on('click', function () {
+                        var btn = $(this);
+                        var id = btn.attr('id').replace('shock-', '');
+                        var active = btn.attr('data-active') === 'true';
+                        if (!active) {
+                            btn.attr('data-active', true);
+                            btn.toggleClass('btn-secondary', false);
+                            btn.toggleClass('btn-danger', true);
+                            var vibeBtn = $('#vibe-' + id);
+                            vibeBtn.attr('data-active', false);
+                            vibeBtn.toggleClass('btn-primary', false);
+                            vibeBtn.toggleClass('btn-secondary', true);
+                            // TODO: Send shock command to the server
+                        }
+                    });
+                    tr.append($('<td>').append(vibeBtn).append(' ').append(shockBtn));
+                    tbody.append(tr);
+                });
+            });
+        });
+    </script>
+    <!-- jQuery and Bootstrap JS -->
+    <!--<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>-->
+    <script src="/res/popper.min.js"></script>
+    <script src="/res/bootstrap.min.js"></script>
+</body>
+
+</html>
