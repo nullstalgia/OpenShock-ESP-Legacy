@@ -6,3 +6,6 @@
 *__pycache__*
 Pipfile.lock
 .vscode/
+full_esp32_with_fs.bin
+full_esp32-s3_with_fs.bin
+output/

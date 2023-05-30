@@ -25,7 +25,7 @@ The firmware is written in the Arduino framework under PlatformIO. Other technol
 
 Prebuilt:
 
-- ESP32+ with a 433Mhz transmitter ([OpenShock Core](https://github.com/nullstalgia/OpenShock-Hardware/tree/main/Core), PiShock Lite)
+- ESP32+ with a 433Mhz transmitter ([OpenShock Core](https://github.com/nullstalgia/OpenShock-Hardware/tree/main/Core), [PiShock Lite](http://pishock.com/))
 
 DIY:
 
