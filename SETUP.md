@@ -9,13 +9,21 @@
 [PiShock Lite](http://pishock.com/) and other ESP32 boards: Use the ESP32 binaries
 
 - In **Chrome** (most other browsers do not yet have WebSerial), go to Espressif's [Web ESPTool Page](https://espressif.github.io/esptool-js/).
-- Click Connect and select your device from the list.
+- Plug in your device to your computer via a USB cable.
+- Click Connect and select your OpenShock from the list.
+    - The Baudrate should be fine at the default setting. If you encounter issues during these steps, try a lower value like `115200`.
+    - If you are unsure which listing is the OpenShock, you can look for the listing that appears in the pop-up while you plug in the device. (The name may not match what is shown in the GIF!)
+
+![2023-06-09--15-17-17-chrome](https://github.com/nullstalgia/OpenShock-ESP/assets/20761757/e166205d-a94a-4a0b-96bf-5e78122bac27)
+
 - Change the address to flash to `0x0`
 - Click the "Choose File" button and select the .bin file you downloaded.
-- Click Flash and wait for the process to complete.
-
+- Click "Program" and wait for the process to complete. This process can take 1-3 minutes, patience is advised. 
+    - It may appear stuck near the final percentages, but it is likely still working. If it does not complete after 5 minutes, try again.
+- Once you see "Leaving..." in the console, you can power-cycle the device and proceed to the next section.
+- You do not require a USB data connection to your computer from this point forward, you can even use a USB power bank to power the device near your playspace.
 ## WiFi Setup
-
+- Connect your OpenShock to USB Power.
 - With your phone or computer, connect to the "OpenShock" WiFi network emitted by the device after firmware installation.
 - If it does not take you to the setup page automatically, navigate to `192.168.4.1` in your browser.
 - Select "Setup Wifi", choose your WiFi network from the list, and enter the password.
@@ -29,9 +37,9 @@
 - Click on "[Devices](http://openshock.local/)" in the top menu.
 - The top of the page has the form for adding new shockers. You'll need to fill out all parts of it for each shocker.
     -  ID: The ID the shocker listens for. You can click the dice next to the field to generate a random ID. If you are coming from an existing shocker solution, you can use the same IDs to avoid needing to pair your shockers again.
-    - Shocker Type:
+    - Shocker Type (example pics):
         - [Generic. Small shocker, common on Amazon and AliExpress.](https://github.com/nullstalgia/OpenShock-ESP/assets/20761757/6a1eb657-0f6b-4dea-ac97-c88486024e8c)
-        - [Petrainers. Known working with PET998DB, PET998DRU models. Others may work as well, need user feedback.](https://github.com/nullstalgia/OpenShock-ESP/assets/20761757/d422439c-fa78-4055-bf4d-f8091790440b)
+        - [Petrainers. "Petrainer" label on the device. Known working with PET998DB, PET998DRU models. Others may work as well, need user feedback.](https://github.com/nullstalgia/OpenShock-ESP/assets/20761757/d422439c-fa78-4055-bf4d-f8091790440b)
     - Maximum shock and vibe intensities: Sliders from 0% to 100%, these will take in incoming shock commands and scale them by this amount. This is especially helpful for turning down body parts that are more sensitive than others.
         - Example 1: Command of 100% intensity to a shocker with a maximum intensity of 50% will result in a shock of 50% intensity.
         - Example 2: Command of 50% intensity to a shocker with a maximum intensity of 100% will result in a shock of 50% intensity.

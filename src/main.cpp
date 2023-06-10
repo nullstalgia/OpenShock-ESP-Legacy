@@ -85,6 +85,10 @@ void setup() {
     bool res;
     WiFiManager wm;
     wm.setDarkMode(true);
+
+    // Note to self: "sep" is the separator between the menu items
+    const char * menu[] = {"wifi","wifinoscan","sep","info","update","exit"};
+    wm.setMenu(menu, 6);
     res = wm.autoConnect("OpenShock");
 
     // TODO: FIX needing to reset after connecting to new AP
