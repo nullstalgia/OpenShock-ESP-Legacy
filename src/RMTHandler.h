@@ -8,7 +8,7 @@ class RMTHandler {
     rmt_obj_t* rmtSendObject = NULL;
     bool init(uint8_t gpio) {
 
-        if ((rmtSendObject = rmtInit(15, RMT_TX_MODE, RMT_MEM_192)) == NULL) {
+        if ((rmtSendObject = rmtInit(gpio, RMT_TX_MODE, RMT_MEM_192)) == NULL) {
             debugPrintln("Shocker: init sender failed\n");
             return false;
         } else {

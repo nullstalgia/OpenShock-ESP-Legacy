@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>OpenShock</title>
+    <title>OpenShock Legacy</title>
     <script>
         fetch('./res/header.html')
             .then(response => response.text())
@@ -13,88 +13,11 @@
                 document.querySelector('head').innerHTML += data;
             });
     </script>
-    <script src="res/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap CSS -->
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body {
-            background-color: #333;
-            color: #fff;
-        }
-
-        .navbar-dark .navbar-nav .nav-link {
-            color: #333;
-        }
-
-        .table {
-            background-color: #444;
-            color: #fff;
-        }
-
-        .table th,
-        .table td {
-            border-color: #555;
-        }
-
-        .btn-primary,
-        .btn-success,
-        .btn-danger {
-            filter: brightness(80%);
-        }
-
-        .custom-range::-webkit-slider-thumb {
-            background-color: #fff;
-            border-color: #aaa;
-        }
-
-        .custom-range::-moz-range-thumb {
-            background-color: #fff;
-            border-color: #aaa;
-        }
-
-        #slider-container {
-            width: 20em;
-            height: 20em;
-            border: .2em solid black;
-            position: relative;
-            border-radius: 2em;
-        }
-
-        #slider {
-            width: 4em;
-            height: 4em;
-            background-color: red;
-            position: absolute;
-            cursor: move;
-            left: 8em;
-            /* Set the initial position to the bottom middle */
-            bottom: 0;
-            border-radius: 2em;
-        }
-
-        #percentage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1em;
-            color: white;
-        }
-        
-
-        #intensity-scaling-slider {
-            position: relative;
-            right: 0;
-            top: .2em;
-            float: left;
-        }
-    </style>
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">OpenShock</a>
+        <a class="navbar-brand" href="#">OpenShock Legacy</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -111,37 +34,38 @@
                     <a class="nav-link" href="/settings">Settings</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"><s>Sharing</s><sup>coming soon</sup></a>
+                    <a class="nav-link" href="https://shocklink.net/"><s>Sharing</s><sup>Try out ShockLink?</sup></a>
                 </li>
             </ul>
         </div>
     </nav>
 
     <div class="container my-4">
-        <h2>My Devices</h2>
+        <h2>Test configured shockers:</h2>
         <table class="table">
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Status</th>
-                    <th>Intensity</th>
+                    <th>Per-Device Max Intensity</th>
                     <th>Vibe/Shock</th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
-    </div>
-
-    <div id="slider-container">
-        <div id="slider">
-            <div id="percentage">0%</div>
+        <div id="slider-container">
+            <div id="slider">
+                <div id="percentage">0%</div>
+            </div>
+            <!--vertical slider to right of slider container -->
+            <input type="range" id="intensity-scaling-slider" min="0" max="100" value="100" class="slider-vertical"
+                orient="vertical">
+            <span id="scaleFactor">Maximum Intensity: 100%</span>
         </div>
     </div>
-    <!--vertical slider to right of slider container -->
-    <input type="range" id="intensity-scaling-slider" min="0" max="100" value="20" class="slider-vertical"
-        orient="vertical">
-    <span id="scaleFactor">Scale Factor: 20%</span>
+
+    
     <script src="/res/jquery-3.6.0.min.js"></script>
     <script>
         var slider = $('#slider');
@@ -189,18 +113,20 @@
         });
 
         $(document).mouseup(function () {
-            isDragging = false;
-            // Snap to the bottom when released
-            slider.animate({ top: sliderContainer.height() - slider.height() });
-            var commands = generateShockerCommands()
-            var ids = commands.map(function (command) {
-                return command.id;
-            });
-            var message = { method: 0, intensity: 0, duration: 0, ids: ids, timestamp: Date.now() };
-            console.log(JSON.stringify(message));
-            socket.send(JSON.stringify(message));
-            percentageDiv.text('0%');
-            sliderContainer.mousemove();
+            if (isDragging) {
+                isDragging = false;
+                // Snap to the bottom when released
+                slider.animate({ top: sliderContainer.height() - slider.height() });
+                var commands = generateShockerCommands()
+                var ids = commands.map(function (command) {
+                    return command.id;
+                });
+                var message = { method: 0, intensity: 0, duration: 0, ids: ids, timestamp: Date.now() };
+                console.log(JSON.stringify(message));
+                socket.send(JSON.stringify(message));
+                percentageDiv.text('0%');
+                sliderContainer.mousemove();
+            }
         });
 
 
@@ -240,8 +166,8 @@
 
         // On document ready, prepare the setInterval
         $(document).ready(function () {
-            // Set initial scaling slider value to 20%
-            $('#intensity-scaling-slider').val(20);
+            // Set initial scaling slider value to 100%
+            $('#intensity-scaling-slider').val(100);
 
             // Scale slider position and send via GET every 10ms
             setInterval(function () {
@@ -273,7 +199,7 @@
 
         // On changing the scaling slider, show the new value
         $('#intensity-scaling-slider').on('input', function () {
-            $('#scaleFactor').text('Scale Factor: ' + $(this).val() + '%');
+            $('#scaleFactor').text('Maximum Intensity: ' + $(this).val() + '%');
         });
 
         $(document).ready(function () {
